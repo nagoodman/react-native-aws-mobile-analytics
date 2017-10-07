@@ -24,10 +24,25 @@ export default class Manager {
         this.options = options;
     }
 
+    const isNetworkConnected = () => {
+			return NetInfo.getConnectionInfo().then(reachability => {
+				if (reachability.type === 'unknown') {
+					return new Promise(resolve => {
+						const handleFirstConnectivityChangeIOS = isConnected => {
+							NetInfo.isConnected.removeEventListener('connectionChange', handleFirstConnectivityChangeIOS);
+							resolve(isConnected);
+						};
+						NetInfo.isConnected.addEventListener('connectionChange', handleFirstConnectivityChangeIOS);
+					});
+				}
+				return (reachability.type !== 'none' && reachability.type !== 'unknown')
+			});
+		} 
+
     async initialize(callback) {
 
-        let isConnected = await NetInfo.isConnected.fetch();
-
+        let isConnected = isNetworkConnected();
+    
         if (isConnected) {
             let options = this.options;
             if (options instanceof Client) {
